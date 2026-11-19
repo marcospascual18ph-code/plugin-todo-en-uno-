@@ -1,0 +1,26 @@
+name: Compilar AI Studio
+on:
+  workflow_dispatch:
+  push:
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compilar
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release -j 4
+      - name: Crear DMG
+        run: |
+          mkdir dmgroot
+          find build -name "*.component" -prune -exec cp -R {} dmgroot/ \;
+          find build -name "*.app" -prune -exec cp -R {} dmgroot/ \;
+          ln -s /Library/Audio/Plug-Ins/Components "dmgroot/Arrastra el .component aqui"
+          ln -s /Applications dmgroot/Applications
+          ls -la dmgroot
+          hdiutil create -volname "AI Studio" -srcfolder dmgroot -ov -format UDZO AIStudio.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIStudio-dmg
+          path: AIStudio.dmg
